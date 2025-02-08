@@ -1,0 +1,51 @@
+/*
+  ==============================================================================
+
+    This file contains the basic framework code for a JUCE plugin editor.
+
+  ==============================================================================
+*/
+
+#include "PluginProcessor.h"
+#include "PluginEditor.h"
+
+//==============================================================================
+VBANEmitterAudioProcessorEditor::VBANEmitterAudioProcessorEditor (VBANEmitterAudioProcessor& p)
+    : AudioProcessorEditor (&p), audioProcessor (p)
+{
+    // Make sure that before the constructor has finished, you've set the
+    // editor's size to whatever you need it to be.
+    
+    addAndMakeVisible(face);
+    setSize (300, 250);
+    face_get_context();
+    VBanHeader* header = &p.vban_packet.header;
+    face.vban_header = header;
+}
+
+VBANEmitterAudioProcessorEditor::~VBANEmitterAudioProcessorEditor()
+{
+}
+
+//==============================================================================
+void VBANEmitterAudioProcessorEditor::paint (juce::Graphics& g)
+{
+    // (Our component is opaque, so we must completely fill the background with a solid colour)
+    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+
+    g.setColour (juce::Colours::white);
+    g.setFont (15.0f);
+    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+}
+
+void VBANEmitterAudioProcessorEditor::resized()
+{
+    face.setBounds(getLocalBounds());
+    // This is generally where you'll want to lay out the positions of any
+    // subcomponents in your editor..
+}
+
+void VBANEmitterAudioProcessorEditor::face_get_context()
+{
+    face.getContext();
+}
