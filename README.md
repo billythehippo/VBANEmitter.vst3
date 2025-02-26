@@ -5,7 +5,7 @@ This is a simple cross-platform VBAN Emitter JUCE based VST3 plugin for Linux, M
 
 Now it can save IP, port, Streamname, format and redundancy in presets of our DAWs (tested on Reaper and Ardour on Linux as VST3, on Reaper on Mac OS as AU and also on Carla on Linux as LV2.
 
-The SCAN function is for future to find VBANReceptor.vst3 (coming soon) and new versions of multistream VBAN receptors for Jack and Pipewire (also coming soon).
+The SCAN function is for future to find VBANReceptor.vst3 (see here in our github repos) and new versions of multistream VBAN receptors for Jack and Pipewire (coming soon).
 
 It has been tested only on Linux and Mac OS but we all know about JUCE
 
