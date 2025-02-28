@@ -44,6 +44,15 @@ VBANEmitterAudioProcessorEditor::VBANEmitterAudioProcessorEditor (VBANEmitterAud
     addAndMakeVisible (labelFmt);
     labelFmt.setBounds (16, 144, 70, 24);
 
+    char channelsnum[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    if (nboutputs==1) sprintf(channelsnum, "1 channel");
+    else sprintf(channelsnum, "%d channels", nboutputs);
+    fprintf(stderr, "%s\r\n", channelsnum);
+    labelChannels.setText(channelsnum, juce::dontSendNotification);
+    labelChannels.setJustificationType (36);
+    addAndMakeVisible (labelChannels);
+    labelChannels.setBounds (120, 248, 80, 24);
+
     addAndMakeVisible (textEditorIP); //refreshIPAddressTextFromParameters(ipAddr);
     audioProcessor.refreshIPAddressTextFromParameters(IPAddr);
     textEditorIP.setText (TRANS (IPAddr));
@@ -307,7 +316,7 @@ VBANEmitterAudioProcessorEditor::VBANEmitterAudioProcessorEditor (VBANEmitterAud
     gainSlider.setBounds (240, 16, 70, 190);
     gainSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.parameters, "gain", gainSlider);
 
-    setSize (400, 400);//(240, 260);
+    setSize (320, 280);//(240, 260);
 }
 
 VBANEmitterAudioProcessorEditor::~VBANEmitterAudioProcessorEditor()
