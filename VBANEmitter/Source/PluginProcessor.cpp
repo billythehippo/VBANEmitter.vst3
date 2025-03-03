@@ -9,19 +9,15 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-uint16_t nbinputs = 2;
-uint16_t nboutputs = 2;
+//uint16_t nbinputs = 2;
+//uint16_t nboutputs = 2;
 
 //==============================================================================
 VBANEmitterAudioProcessor::VBANEmitterAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::discreteChannels(nbinputs), true) //canonicalChannelSet(nbinputs)
-                      #endif
                        .withOutput ("Output", juce::AudioChannelSet::discreteChannels(nboutputs), true) //canonicalChannelSet(nboutputs)
-                     #endif
                        ),
         parameters(*this, nullptr, "PARAMETERS",
             {
@@ -58,12 +54,16 @@ VBANEmitterAudioProcessor::VBANEmitterAudioProcessor()
 #endif
 {
     txsocket.bindToPort(0);
-    rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
+    //rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
 }
 
 VBANEmitterAudioProcessor::~VBANEmitterAudioProcessor()
 {
-    if (rxThread != nullptr && rxThread->isThreadRunning()) rxThread->stopThread(1000);
+    /*if (rxThread != nullptr)
+    {
+        if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
+        rxThread = nullptr;
+    }*/
     txsocket.shutdown();
 }
 
@@ -73,38 +73,52 @@ void VBANEmitterAudioProcessor::scanReceptors()
     char ipBroadCastAddr[16];
     uint8_t ipBytes[4];
 
-    if (!rxThread->isThreadRunning()) rxThread->start(&txsocket, &udpPort, nbinputs, nframes, &receptorInfos, &ips);
-    //Fillind request packet
-    memset(&packet, 0, VBAN_PROTOCOL_MAX_SIZE);
-    packet.header.vban = VBAN_HEADER_FOURC;
-    packet.header.format_SR = VBAN_PROTOCOL_TXT;
-    packet.header.format_bit = 0;
-    packet.header.format_nbc = 0;
-    packet.header.format_nbs = 0;
-    strcpy(packet.header.streamname, "INFO");
-    packet.header.nuFrame = 0;
-    strcpy(packet.data, "/info");
-
-    receptorInfos.clear();
-    juce::IPAddress::findAllAddresses (ips);
-    for (int n = 0; n < ips.size(); n++) fprintf(stderr, "IP%d %s:%d\r\n", n+1, ips[n].toString().toRawUTF8(), udpPort);
-
-    for (int n = 0; n < ips.size(); n++)
+    if (parameters.getRawParameterValue("onoff")->load() == false)
     {
-        sscanf(ips[n].toString().toRawUTF8(), "%hhu.%hhu.%hhu.%hhu", &ipBytes[3], &ipBytes[2], &ipBytes[1], &ipBytes[0]);
-        ipBytes[0] = 255;
-        memset(ipBroadCastAddr, 0, 16);
-        sprintf(ipBroadCastAddr, "%hhu.%hhu.%hhu.%hhu", ipBytes[3], ipBytes[2], ipBytes[1], ipBytes[0]);
-        txsocket.write(juce::String(ipBroadCastAddr), udpPort, &packet, VBAN_HEADER_SIZE+strlen(packet.data));
-        usleep(100000);
+        rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
+        rxThread->start(&txsocket, &udpPort, nbinputs, nframes, &receptorInfos, &ips);
+        //Fillind request packet
+        memset(&packet, 0, VBAN_PROTOCOL_MAX_SIZE);
+        packet.header.vban = VBAN_HEADER_FOURC;
+        packet.header.format_SR = VBAN_PROTOCOL_TXT;
+        packet.header.format_bit = 0;
+        packet.header.format_nbc = 0;
+        packet.header.format_nbs = 0;
+        strcpy(packet.header.streamname, "INFO");
+        packet.header.nuFrame = 0;
+        strcpy(packet.data, "/info");
+
+        receptorInfos.clear();
+        juce::IPAddress::findAllAddresses (ips);
+        for (int n = 0; n < ips.size(); n++) fprintf(stderr, "IP%d %s:%d\r\n", n+1, ips[n].toString().toRawUTF8(), udpPort);
+
+        for (int n = 0; n < ips.size(); n++)
+        {
+            sscanf(ips[n].toString().toRawUTF8(), "%hhu.%hhu.%hhu.%hhu", &ipBytes[3], &ipBytes[2], &ipBytes[1], &ipBytes[0]);
+            ipBytes[0] = 255;
+            memset(ipBroadCastAddr, 0, 16);
+            sprintf(ipBroadCastAddr, "%hhu.%hhu.%hhu.%hhu", ipBytes[3], ipBytes[2], ipBytes[1], ipBytes[0]);
+            txsocket.write(juce::String(ipBroadCastAddr), udpPort, &packet, VBAN_HEADER_SIZE+strlen(packet.data));
+            usleep(200000);
+        }
+        if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
+        rxThread = nullptr;
     }
-    if ((rxThread->isThreadRunning() == true)&&(parameters.getRawParameterValue("onoff")->load() == false)) rxThread->stopThread(1000);
 }
 
 //==============================================================================
 const juce::String VBANEmitterAudioProcessor::getName() const
 {
-    return JucePlugin_Name;
+    char* pname;
+    sprintf(pname, "VBAN Emitter (%d channels)", nbinputs);
+    return juce::String(pname);//JucePlugin_Name;
+}
+
+const juce::String VBANEmitterAudioProcessor::getIdentifierString() const
+{
+    char* pname;
+    sprintf(pname, "VBAN Emitter (%d channels)", nbinputs);
+    return juce::String(pname);
 }
 
 bool VBANEmitterAudioProcessor::acceptsMidi() const
@@ -172,10 +186,7 @@ void VBANEmitterAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     
     host_samplerate = getSampleRate();
     nframes = getBlockSize();
-    framebuf = (float*)malloc(sizeof(float)*nbinputs);
     txbuf = (float*)malloc(sizeof(float)*nbinputs*nframes);
-    inputChannelData = (float**)malloc(nbinputs*sizeof(float*));
-    outputChannelData = (float**)malloc(nboutputs*sizeof(float*));
     
     vban_packet.header.vban = VBAN_HEADER_FOURC;
     
@@ -200,32 +211,16 @@ void VBANEmitterAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
 void VBANEmitterAudioProcessor::releaseResources()
 {
-    if (rxThread != nullptr && rxThread->isThreadRunning())
+    /*if (rxThread!= nullptr)
     {
-        rxThread->stopThread(1000);
+        if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
         rxThread = nullptr;
-    }
-    if (framebuf!=nullptr)
-    {
-        free(framebuf);
-        //framebuf = NULL;
-    }
+    }//*/
     if (txbuf!=nullptr)
     {
         free(txbuf);
-        //txbuf = NULL;
+        txbuf = nullptr;
     }
-    if (inputChannelData!=nullptr)
-    {
-        free(inputChannelData);
-        //inputChannelData = NULL;
-    }
-    if (outputChannelData!=nullptr)
-    {
-        free(outputChannelData);
-        //outputChannelData = NULL;
-    }
-    
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
@@ -320,21 +315,23 @@ void VBANEmitterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         refreshIPAddressTextFromParameters(ipAddr);
         udpPort = refreshPortTextFromParameters(udpPortTxt);
         vban_packet.header.format_bit = format;
+        rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
         rxThread->start(&txsocket, &udpPort, numInputChannels, numSamples, &receptorInfos, &ips);
     }
     if ((onoffCurrent==true)&&(onoff==false)) // switching off
     {
         onoffCurrent = false;
-        if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
+        if (rxThread!= nullptr)
+        {
+            if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
+            rxThread = nullptr;
+        }
     }
         
     for (channel = 0; channel < numInputChannels; ++channel)
     {
         inputChannelData[channel] = buffer.getWritePointer(channel);
-        
-        if (numInputChannels > numOutputChannels)
-            continue;
-
+        if (numInputChannels > numOutputChannels) continue;
         outputChannelData[channel] = buffer.getWritePointer(channel);
         std::copy(inputChannelData[channel], inputChannelData[channel] + nframes, outputChannelData[channel]);  // Копируем входные данные в выходные
     }
@@ -553,14 +550,16 @@ int VBANEmitterAudioProcessor::refreshPortParametersFromText(const char* text)
     static int port = 0;
     static int portDiv = 0;
 
-    len = strlen(text);
     sscanf(text, "%d", &port);
     portDiv = port;
-    for (int i=0; i<len; i++)
+    for (int i=0; i<5; i++)
     {
-        portDigits[i] = portDiv%10;
-        portDiv = portDiv/10;
-        if (portDiv==0) break;
+        if (portDiv)
+        {
+            portDigits[i] = portDiv%10;
+            portDiv = portDiv/10;
+        }
+        else portDigits[i] = 0;
     }
     parameters.getParameter("port0")->setValueNotifyingHost((float)portDigits[0]/9.0f);
     parameters.getParameter("port1")->setValueNotifyingHost((float)portDigits[1]/9.0f);

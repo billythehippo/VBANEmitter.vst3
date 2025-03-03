@@ -11,8 +11,10 @@
 #include <JuceHeader.h>
 #include "vban_functions.h"
 
-extern uint16_t nbinputs;
-extern uint16_t nboutputs;
+//extern uint16_t nbinputs;
+//extern uint16_t nboutputs;
+#define nbinputs 2
+#define nboutputs 2
 
 //==============================================================================
 class PlugThread : public juce::Thread
@@ -21,8 +23,8 @@ public:
 
     int packetFrameSize;
     juce::StringArray* infostrings;
-    VBanPacket rxPacket;
     juce::Array<juce::IPAddress>* localIPAddresses;
+    VBanPacket rxPacket;
 
     PlugThread(const juce::String& name) : juce::Thread(name)
     {
@@ -102,6 +104,8 @@ protected:
             }
         }
         //if (plugin_rx_context.framebuf!= nullptr) free(plugin_rx_context.framebuf);
+        //rxsocket = nullptr;
+
         fprintf(stderr, "RX thread stopped...\r\n");
     }
 
@@ -142,7 +146,7 @@ public:
 
     //==============================================================================
     const juce::String getName() const override;
-
+    const juce::String getIdentifierString() const;// override;
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
@@ -190,10 +194,10 @@ private:
     uint16_t udpPort = 0;
     uint8_t format = 4;
     uint8_t redundancy = 0;
-    float* framebuf;
-    float* txbuf;
-    float** inputChannelData;
-    float** outputChannelData;
+    float framebuf[nbinputs];
+    float* txbuf = nullptr;
+    float* inputChannelData[nbinputs];
+    float* outputChannelData[nboutputs];
     bool onoff = false;
     bool onoffCurrent = false;
     
