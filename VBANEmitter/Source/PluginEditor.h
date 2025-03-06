@@ -15,41 +15,41 @@
 //==============================================================================
 /**
 */
-class VBANEmitterAudioProcessorEditor  : public juce::AudioProcessorEditor
-
+class VBANReceptorAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    VBANEmitterAudioProcessorEditor (VBANEmitterAudioProcessor&);
-    ~VBANEmitterAudioProcessorEditor() override;
+    VBANReceptorAudioProcessorEditor (VBANReceptorAudioProcessor&);
+    ~VBANReceptorAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    VBANEmitterAudioProcessor& audioProcessor;
+    bool gettingParametersFromProcessor = false;
+    juce::TextEditor textEditorIP;
+    juce::TextEditor textEditorPort;
+    juce::TextEditor textEditorSN;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    VBANReceptorAudioProcessor& audioProcessor;
+
     juce::Label labelIP;
     juce::Label labelPort;
     juce::Label labelSN;
     juce::Label labelRed;
     juce::Label labelFmt;
     juce::Label labelChannels;
-    juce::TextEditor textEditorIP;
-    juce::TextEditor textEditorPort;
-    juce::TextEditor textEditorSN;
     juce::ComboBox comboBoxNQ;
     juce::ComboBox comboBoxFmt;
     juce::ComboBox comboBoxReceptors;
     juce::TextButton textButtonScan;
     juce::TextButton textButtonGo;
+    juce::ToggleButton pluckingOnOff{"Plucking"};
 
     juce::Slider gainSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainSliderAttachment;
 
     bool scanEnabled = false;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VBANEmitterAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VBANReceptorAudioProcessorEditor)
 };
