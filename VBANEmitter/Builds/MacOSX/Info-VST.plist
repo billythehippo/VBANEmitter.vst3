@@ -25,31 +25,5 @@
     <string></string>
     <key>NSHighResolutionCapable</key>
     <true/>
-    <key>AudioComponents</key>
-    <array>
-      <dict>
-        <key>name</key>
-        <string>billy_the_hippo: VBAN Emitter (2 channels)</string>
-        <key>description</key>
-        <string>VBANEmitter</string>
-        <key>factoryFunction</key>
-        <string>VBANEmitterAUFactory</string>
-        <key>manufacturer</key>
-        <string>Manu</string>
-        <key>type</key>
-        <string>aufx</string>
-        <key>subtype</key>
-        <string>Ihbg</string>
-        <key>version</key>
-        <integer>65536</integer>
-        <key>resourceUsage</key>
-        <dict>
-          <key>network.client</key>
-          <true/>
-          <key>temporary-exception.files.all.read-write</key>
-          <true/>
-        </dict>
-      </dict>
-    </array>
   </dict>
 </plist>

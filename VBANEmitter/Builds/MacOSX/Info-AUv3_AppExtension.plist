@@ -37,7 +37,7 @@
         <array>
           <dict>
             <key>name</key>
-            <string>billy_the_hippo: VBANEmitter</string>
+            <string>billy_the_hippo: VBAN Emitter (2 channels)</string>
             <key>description</key>
             <string>VBANEmitter</string>
             <key>factoryFunction</key>

@@ -7,6 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VBANEmitter - Standalone Pl
 		{A9A55CD8-69B8-B01E-5648-E02873899E72} = {A9A55CD8-69B8-B01E-5648-E02873899E72}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VBANEmitter - VST", "VBANEmitter_VST.vcxproj", "{B1712167-5D2E-F550-EC79-C496459E9F2B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A9A55CD8-69B8-B01E-5648-E02873899E72} = {A9A55CD8-69B8-B01E-5648-E02873899E72}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VBANEmitter - VST3", "VBANEmitter_VST3.vcxproj", "{62B0168A-C672-990C-9502-8194875C6C92}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A9A55CD8-69B8-B01E-5648-E02873899E72} = {A9A55CD8-69B8-B01E-5648-E02873899E72}
@@ -31,6 +36,10 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B1712167-5D2E-F550-EC79-C496459E9F2B}.Debug|x64.ActiveCfg = Debug|x64
+		{B1712167-5D2E-F550-EC79-C496459E9F2B}.Debug|x64.Build.0 = Debug|x64
+		{B1712167-5D2E-F550-EC79-C496459E9F2B}.Release|x64.ActiveCfg = Release|x64
+		{B1712167-5D2E-F550-EC79-C496459E9F2B}.Release|x64.Build.0 = Release|x64
 		{62B0168A-C672-990C-9502-8194875C6C92}.Debug|x64.ActiveCfg = Debug|x64
 		{62B0168A-C672-990C-9502-8194875C6C92}.Debug|x64.Build.0 = Debug|x64
 		{62B0168A-C672-990C-9502-8194875C6C92}.Release|x64.ActiveCfg = Release|x64
