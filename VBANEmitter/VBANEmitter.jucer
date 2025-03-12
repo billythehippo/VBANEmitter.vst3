@@ -2,12 +2,10 @@
 
 <JUCERPROJECT id="ihBgJ0" name="VBANEmitter" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginManufacturer="billy_the_hippo" pluginFormats="buildAU,buildStandalone,buildVST3"
-              pluginName="VBAN Emitter (2 channels)">
+              pluginManufacturer="billy_the_hippo" pluginFormats="buildAU,buildAUv3,buildLV2,buildStandalone,buildVST,buildVST3"
+              pluginName="VBAN Emitter (2 channels)" lv2Uri="https://github.com/billythehippo/VBANEmitter.vst3">
   <MAINGROUP id="ur26k3" name="VBANEmitter">
     <GROUP id="{B52D82EF-C877-8292-8999-71849C751B30}" name="Source">
-      <FILE id="vhWt0r" name="vban_functions.cpp" compile="1" resource="0"
-            file="Source/vban_functions.cpp"/>
       <FILE id="aIHpkd" name="vban_functions.h" compile="0" resource="0"
             file="Source/vban_functions.h"/>
       <FILE id="DvQZgx" name="vban.h" compile="0" resource="0" file="Source/vban.h"/>
