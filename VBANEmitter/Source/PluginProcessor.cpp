@@ -16,8 +16,8 @@
 VBANEmitterAudioProcessor::VBANEmitterAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                       .withInput  ("Input",  juce::AudioChannelSet::discreteChannels(nbinputs), true) //canonicalChannelSet(nbinputs)
-                       .withOutput ("Output", juce::AudioChannelSet::discreteChannels(nboutputs), true) //canonicalChannelSet(nboutputs)
+                       .withInput  ("Input",  juce::AudioChannelSet::canonicalChannelSet(nbinputs), true) //discreteChannels(nbinputs)
+                       .withOutput ("Output", juce::AudioChannelSet::canonicalChannelSet(nboutputs), true) //canonicalChannelSet(nboutputs)
                        ),
         parameters(*this, nullptr, "PARAMETERS",
             {
@@ -53,9 +53,6 @@ VBANEmitterAudioProcessor::VBANEmitterAudioProcessor()
             })
 #endif
 {
-    //txsocket.bindToPort(0);
-    txsocket = std::make_unique<juce::DatagramSocket>(true);
-    txsocket->bindToPort(0);
     //rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
 }
 
@@ -65,11 +62,6 @@ VBANEmitterAudioProcessor::~VBANEmitterAudioProcessor()
     {
         if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
         rxThread = nullptr;
-    }//*/
-    if (txsocket!= nullptr)
-    {
-        txsocket->shutdown();
-        txsocket = nullptr;
     }//*/
     if (txbuf!=nullptr)
     {
@@ -87,7 +79,7 @@ void VBANEmitterAudioProcessor::scanReceptors()
     if (parameters.getRawParameterValue("onoff")->load() == false)
     {
         rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
-        rxThread->start(txsocket.get(), &udpPort, nbinputs, nframes, &receptorInfos, &ips);
+        rxThread->start(NULL, &udpPort, nbinputs, nframes, &receptorInfos, &ips);
         //Fillind request packet
         memset(&packet, 0, VBAN_PROTOCOL_MAX_SIZE);
         packet.header.vban = VBAN_HEADER_FOURC;
@@ -110,7 +102,7 @@ void VBANEmitterAudioProcessor::scanReceptors()
             ipBytes[0] = 255;
             memset(ipBroadCastAddr, 0, 16);
             sprintf(ipBroadCastAddr, "%hhu.%hhu.%hhu.%hhu", ipBytes[3], ipBytes[2], ipBytes[1], ipBytes[0]);
-            txsocket->write(juce::String(ipBroadCastAddr), udpPort, &packet, VBAN_HEADER_SIZE+strlen(packet.data));
+            rxThread->socket->write(juce::String(ipBroadCastAddr), udpPort, &packet, VBAN_HEADER_SIZE+strlen(packet.data));
             usleep(200000);
         }
         if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
@@ -218,7 +210,7 @@ void VBANEmitterAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     
     vban_packet.header.nuFrame = 0;
     
-    fprintf(stderr, "samplerate %d nframes %d\r\n", host_samplerate, nframes);
+    fprintf(stderr, "samplerate %ld nframes %d\r\n", host_samplerate, nframes);
 }
 
 void VBANEmitterAudioProcessor::releaseResources()
@@ -227,11 +219,6 @@ void VBANEmitterAudioProcessor::releaseResources()
     {
         if (rxThread->isThreadRunning()) rxThread->stopThread(1000);
         rxThread = nullptr;
-    }//*/
-    if (txsocket!= nullptr)
-    {
-        txsocket->shutdown();
-        txsocket = nullptr;
     }//*/
     if (txbuf!=nullptr)
     {
@@ -283,7 +270,7 @@ void VBANEmitterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     format = (int)parameters.getRawParameterValue("format")->load();
     redundancy = (int)parameters.getRawParameterValue("redundancy")->load();
 
-    //fprintf(stderr, "onoff %d gain %f\r\n", onoff, gain);
+    fprintf(stderr, "in %d out %d\r\n", numInputChannels, numOutputChannels);
 
     
     if (host_samplerate!=sr)
@@ -316,7 +303,7 @@ void VBANEmitterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         refreshIPAddressTextFromParameters(ipAddr);
         udpPort = refreshPortTextFromParameters(udpPortTxt);
         
-        fprintf(stderr, "samplerate %d nframes %d\r\n", host_samplerate, nframes);
+        fprintf(stderr, "samplerate %ld nframes %d\r\n", host_samplerate, nframes);
     }
 
     if (format!= vban_packet.header.format_bit)
@@ -333,7 +320,7 @@ void VBANEmitterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         udpPort = refreshPortTextFromParameters(udpPortTxt);
         vban_packet.header.format_bit = format;
         rxThread = std::make_unique<PlugThread>("VBAN Receiving Thread");
-        rxThread->start(txsocket.get(), &udpPort, numInputChannels, numSamples, &receptorInfos, &ips);
+        rxThread->start(NULL, &udpPort, numInputChannels, numSamples, &receptorInfos, &ips);
     }
     if ((onoffCurrent==true)&&(onoff==false)) // switching off
     {
@@ -371,7 +358,7 @@ void VBANEmitterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
             }
             //fprintf(stderr, "%s\r\n", ipAddr);
             for (int red = 0; red < (1 + redundancy); red++)
-            txsocket->write(ipAddr, udpPort, &vban_packet, VBAN_HEADER_SIZE + vban_packet_data_len);
+            rxThread->socket->write(ipAddr, udpPort, &vban_packet, VBAN_HEADER_SIZE + vban_packet_data_len);
             vban_packet.header.nuFrame++;
         }
     }

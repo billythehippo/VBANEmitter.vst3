@@ -13,8 +13,12 @@
 
 //extern uint16_t nbinputs;
 //extern uint16_t nboutputs;
-#define nbinputs 2
-#define nboutputs 2
+//#define nbinputs 2
+//#define nboutputs 2
+//#define nbc 2
+#define NUMBER_OF_CHANNELS 2
+#define nbinputs NUMBER_OF_CHANNELS
+#define nboutputs NUMBER_OF_CHANNELS
 
 //==============================================================================
 class PlugThread : public juce::Thread
@@ -25,20 +29,32 @@ public:
     juce::StringArray* infostrings;
     juce::Array<juce::IPAddress>* localIPAddresses;
     VBanPacket rxPacket;
+    std::unique_ptr<juce::DatagramSocket>socket;
 
     PlugThread(const juce::String& name) : juce::Thread(name)
     {
     }
 
-    void start(juce::DatagramSocket* socket, uint16_t* port, int nbc, int nfr, juce::StringArray* infos, juce::Array<juce::IPAddress>* ips)
+    bool start(char* ip, uint16_t* port, int nbc, int nfr, juce::StringArray* infos, juce::Array<juce::IPAddress>* ips)
     {
         nbchannels = nbc;
         nframes = nfr;
-        rxsocket = socket;
         infostrings = infos;
         localIPAddresses = ips;
-        //rxsocket->bindToPort(*port);
-        startThread();
+        socket.reset(new juce::DatagramSocket);
+        if (socket->bindToPort(0))
+        {
+            fprintf(stderr, "UDP socket successfully bound\r\n");
+            startThread();
+            return true;
+        }
+        else
+        {
+            fprintf(stderr, "Failed to open UDP socket!\r\n");
+            socket->shutdown();
+            socket = nullptr;
+            return false;
+        }
     }
 
 protected:
@@ -57,10 +73,10 @@ protected:
 
         while (!threadShouldExit())
         {
-            while (rxsocket->waitUntilReady(true, 0))
+            while (socket->waitUntilReady(true, 0))
             {
                 memset(&rxPacket, 0, VBAN_PROTOCOL_MAX_SIZE);
-                pktlen = rxsocket->read(&rxPacket, VBAN_PROTOCOL_MAX_SIZE, false, senderIPAddress, senderPortNumber);
+                pktlen = socket->read(&rxPacket, VBAN_PROTOCOL_MAX_SIZE, false, senderIPAddress, senderPortNumber);
                 if ((pktlen>VBAN_HEADER_SIZE)&&(rxPacket.header.vban==VBAN_HEADER_FOURC))
                 {
                     switch (rxPacket.header.format_SR&VBAN_PROTOCOL_MASK)
@@ -90,7 +106,7 @@ protected:
                                 *                       infopacket.header.format_SR = VBAN_PROTOCOL_TXT;
                                 *                       strcpy(infopacket.header.streamname, "INFO");
                                 *                       sprintf(infopacket.data, "VST3_Receptor streamname=%s nboutputs=%d", plugin_rx_context.streamname, nbchannels);
-                                *                       rxsocket->write(senderIPAddress, senderPortNumber, &infopacket, VBAN_HEADER_SIZE + strlen(infopacket.data));//*/
+                                *                       socket->write(senderIPAddress, senderPortNumber, &infopacket, VBAN_HEADER_SIZE + strlen(infopacket.data));//*/
                             }
                             break;
                         case VBAN_PROTOCOL_USER:
@@ -103,17 +119,19 @@ protected:
                 }
             }
         }
-        //if (plugin_rx_context.framebuf!= nullptr) free(plugin_rx_context.framebuf);
-        //rxsocket = nullptr;
-
-        fprintf(stderr, "RX thread stopped...\r\n");
+        
+        socket->shutdown();
+        if (socket!= nullptr)
+        {
+            socket = nullptr;
+            fprintf(stderr, "RX thread stopped...\r\n");
+        }
     }
 
   private:
 
     int nbchannels;
     int nframes;
-    juce::DatagramSocket* rxsocket;
 
     void threadWork()
     {
@@ -176,8 +194,6 @@ public:
     void scanReceptors();
 
     juce::AudioProcessorValueTreeState parameters;
-    //juce::DatagramSocket txsocket;
-    std::unique_ptr<juce::DatagramSocket> txsocket;
     juce::StringArray receptorInfos;
     VBanPacket vban_packet;
 
