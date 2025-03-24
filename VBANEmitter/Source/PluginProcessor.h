@@ -41,7 +41,7 @@ public:
         nframes = nfr;
         infostrings = infos;
         localIPAddresses = ips;
-        socket.reset(new juce::DatagramSocket);
+        socket.reset(new juce::DatagramSocket(true));
         if (socket->bindToPort(0))
         {
             fprintf(stderr, "UDP socket successfully bound\r\n");
