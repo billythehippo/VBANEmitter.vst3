@@ -9,11 +9,10 @@ The SCAN function is for future to find VBANReceptor.vst3 (see here in our githu
 
 It has been tested only on Linux and Mac OS but we all know about JUCE
 
-To build it on Linux just clone this repo, go to Builds/LinuxMakeFile, open terminal there and type "make"
-It will be places to ~/vst3, just move it to directory what you want (if you want).
+BUILD: To build it on Linux just clone this repo, go to Builds/LinuxMakeFile, open terminal there and type "make" It will be places to ~/vst3, just move it to directory what you want (if you want). To build it on Mac OS use xcodebuild (see its docs or ask GPT). To build it on/for other platforms just ask GPT how to build basic JUCE project. OR: Linux/Mac
 
-To build it on Mac OS use xcodebuild (see its docs or ask GPT).
-
-To build it on/for other platforms just ask GPT how to build basic JUCE project.
+mkdir build && cd build
+cmake -DCHANNELS= .. # number is of channels (must be from 1 to 64, default 2)
+make -j # pnum is number of processors you want to use for building
 
 Roadmap: to test it on Windows, iOS and even on Android.
